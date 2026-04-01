@@ -177,7 +177,10 @@ def _clear_install_failed():
 def _hermes_bin_dir() -> str:
     """Return $HERMES_HOME/bin, creating it if needed."""
     d = os.path.join(_get_hermes_home(), "bin")
-    os.makedirs(d, exist_ok=True)
+    try:
+        os.makedirs(d, exist_ok=True)
+    except PermissionError:
+        logger.warning("Permission denied creating %s", d)
     return d
 
 
@@ -360,7 +363,12 @@ def _install_tirith(*, log_failures: bool = True) -> tuple[str | None, str]:
 
         src = os.path.join(tmpdir, "tirith")
         dest = os.path.join(_hermes_bin_dir(), "tirith")
-        shutil.move(src, dest)
+        try:
+            shutil.copy2(src, dest)
+        except PermissionError:
+            logger.warning("Permission denied writing to %s — check volume permissions", dest)
+            return None, "permission_denied"
+        os.unlink(src)
         os.chmod(dest, os.stat(dest).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
         verification = "cosign + SHA-256" if cosign_verified else "SHA-256 only"

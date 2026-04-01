@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL with pgvector extension for Honcho
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: hermes-postgres
+    environment:
+      POSTGRES_DB: honcho
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # 외부 포트 5433으로 변경 (로컬 PostgreSQL 충돌 방지)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hermes-network
+
+  # Honcho API server (self-hosted)
+  honcho:
+    build:
+      context: ./docker/honcho
+      dockerfile: Dockerfile
+    container_name: hermes-honcho
+    environment:
+      DB_CONNECTION_URI: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/honcho
+      AUTH_USE_AUTH: "false"
+      LOG_LEVEL: INFO
+      # Required API keys (use dummy values if not using these features)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-dummy}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-dummy}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hermes-network
+
+  # Hermes Agent
+  hermes:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: hermes-agent
+    environment:
+      HERMES_HOME: /opt/data
+      # Point to self-hosted Honcho
+      HONCHO_BASE_URL: http://honcho:8000
+      # z.ai GLM Coding API
+      GLM_API_KEY: ${GLM_API_KEY:-}
+      GLM_BASE_URL: ${GLM_BASE_URL:-}
+      # Optional: OpenAI for Honcho dialectic
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      EXA_API_KEY: ${EXA_API_KEY:-}
+      COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Point httpx/requests to system CA bundle (entrypoint adds custom CA via update-ca-certificates)
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+    volumes:
+      - ./hermes-data:/opt/data
+      - ${SSL_CERT_FILE:-/dev/null}:/opt/custom-ca.pem:ro
+    depends_on:
+      - honcho
+    networks:
+      - hermes-network
+    # Override entrypoint for interactive mode
+    # Remove this if you want to run a specific platform
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hermes-network:
+    driver: bridge

@@ -1,0 +1,40 @@
+# Development override for docker-compose
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  hermes:
+    # Mount source code for live development
+    volumes:
+      - ./hermes-data:/opt/data
+      - .:/opt/hermes:ro  # Read-only source mount
+    # Override command for development
+    command: ["bash"]
+    # Enable debugging
+    environment:
+      HERMES_HOME: /opt/data
+      HONCHO_BASE_URL: http://honcho:8000
+      LOG_LEVEL: DEBUG
+      PYTHONUNBUFFERED: "1"
+
+  honcho:
+    # Enable debug logging
+    environment:
+      DB_CONNECTION_URI: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/honcho
+      AUTH_USE_AUTH: "false"
+      LOG_LEVEL: DEBUG
+
+  postgres:
+    # Expose PostgreSQL port for direct access
+    ports:
+      - "5432:5432"
+    # Add pgAdmin for database management (optional)
+    # Uncomment to enable:
+    # pgadmin:
+    #   image: dpage/pgadmin4:latest
+    #   environment:
+    #     PGADMIN_DEFAULT_EMAIL: admin@example.com
+    #     PGADMIN_DEFAULT_PASSWORD: admin
+    #   ports:
+    #     - "5050:80"
+    #   networks:
+    #     - hermes-network
