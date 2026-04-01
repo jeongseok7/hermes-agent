@@ -38,6 +38,20 @@ if [ -f "$CUSTOM_CA" ] && [ -s "$CUSTOM_CA" ]; then
     update-ca-certificates
 fi
 
+# Pre-authenticate gh CLI if GITHUB_TOKEN is available.
+# When GITHUB_TOKEN is set as an env var, `gh auth login` refuses to store
+# credentials (it says "env var already in use"). We unset it temporarily
+# so gh stores the token in ~/.config/gh/hosts.yml, which persists across
+# subprocesses even if the env var is not inherited.
+if [ -n "$GITHUB_TOKEN" ] && command -v gh &>/dev/null; then
+    _tok="$GITHUB_TOKEN"
+    unset GITHUB_TOKEN
+    echo "$_tok" | gh auth login --with-token 2>/dev/null || true
+    gh auth setup-git 2>/dev/null || true
+    export GITHUB_TOKEN="$_tok"
+    unset _tok
+fi
+
 # Configure Composio MCP server if API key is provided
 if [ -n "$COMPOSIO_API_KEY" ]; then
     python3 -c "
