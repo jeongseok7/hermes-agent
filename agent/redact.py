@@ -124,10 +124,14 @@ def redact_sensitive_text(text: str) -> str:
     text = _PREFIX_RE.sub(lambda m: _mask_token(m.group(1)), text)
 
     # ENV assignments: OPENAI_API_KEY=sk-abc...
-    def _redact_env(m):
-        name, quote, value = m.group(1), m.group(2), m.group(3)
-        return f"{name}={quote}{_mask_token(value)}{quote}"
-    text = _ENV_ASSIGN_RE.sub(_redact_env, text)
+    # Fast guard: _ENV_ASSIGN_RE requires '=' so skip on strings without one.
+    # Without this, the leading [A-Z_]* quantifier causes O(n²) backtracking
+    # on large alphanumeric inputs (e.g. 100K-char file content) with no '='.
+    if "=" in text:
+        def _redact_env(m):
+            name, quote, value = m.group(1), m.group(2), m.group(3)
+            return f"{name}={quote}{_mask_token(value)}{quote}"
+        text = _ENV_ASSIGN_RE.sub(_redact_env, text)
 
     # JSON fields: "apiKey": "value"
     def _redact_json(m):

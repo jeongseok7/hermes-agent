@@ -139,7 +139,9 @@ def test_gateway_run_agent_codex_path_handles_internal_401_refresh(monkeypatch):
         },
     )
     monkeypatch.setenv("HERMES_TOOL_PROGRESS", "false")
-    monkeypatch.setenv("HERMES_MODEL", "gpt-5.3-codex")
+    # _resolve_gateway_model() reads from config.yaml, not HERMES_MODEL.
+    # In the test environment there is no config.yaml, so mock it directly.
+    monkeypatch.setattr(gateway_run, "_resolve_gateway_model", lambda *_: "gpt-5.3-codex")
 
     _Codex401ThenSuccessAgent.refresh_attempts = 0
     _Codex401ThenSuccessAgent.last_init = {}
