@@ -40,6 +40,34 @@ services:
     networks:
       - hermes-network
 
+  # Hermes Gateway (Slack 등 메시징 플랫폼 수신)
+  hermes-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: hermes-gateway
+    command: ["gateway", "run"]
+    environment:
+      HERMES_HOME: /opt/data
+      HONCHO_BASE_URL: http://honcho:8000
+      GLM_API_KEY: ${GLM_API_KEY:-}
+      GLM_BASE_URL: ${GLM_BASE_URL:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      EXA_API_KEY: ${EXA_API_KEY:-}
+      COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+    volumes:
+      - ./hermes-data:/opt/data
+      - ${SSL_CERT_FILE:-/dev/null}:/opt/custom-ca.pem:ro
+    depends_on:
+      - honcho
+    networks:
+      - hermes-network
+    restart: unless-stopped
+
   # Hermes Agent
   hermes:
     build:
