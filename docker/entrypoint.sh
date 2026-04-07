@@ -52,26 +52,4 @@ if [ -n "$GITHUB_TOKEN" ] && command -v gh &>/dev/null; then
     unset _tok
 fi
 
-# Configure Composio MCP server if API key is provided
-if [ -n "$COMPOSIO_API_KEY" ]; then
-    python3 -c "
-import yaml, sys
-config_path = '$HERMES_HOME/config.yaml'
-try:
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f) or {}
-except Exception:
-    config = {}
-if 'mcp_servers' not in config or not isinstance(config.get('mcp_servers'), dict):
-    config['mcp_servers'] = {}
-config['mcp_servers']['composio'] = {
-    'url': 'https://connect.composio.dev/mcp',
-    'headers': {'x-consumer-api-key': '\${COMPOSIO_API_KEY}'},
-}
-with open(config_path, 'w') as f:
-    yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-print('Composio MCP server configured')
-" || echo "Warning: Composio config update failed (non-fatal)"
-fi
-
 exec hermes "$@"

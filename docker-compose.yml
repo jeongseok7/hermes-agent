@@ -55,7 +55,6 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
       EXA_API_KEY: ${EXA_API_KEY:-}
-      COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
       REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
@@ -85,7 +84,6 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
       EXA_API_KEY: ${EXA_API_KEY:-}
-      COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       # OPENAI_API_KEY: ${OPENAI_API_KEY}
       # Point httpx/requests to system CA bundle (entrypoint adds custom CA via update-ca-certificates)

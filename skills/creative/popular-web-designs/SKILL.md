@@ -149,7 +149,6 @@ those carry more visual identity than the specific font face.
 | Template | Site | Style |
 |---|---|---|
 | `clickhouse.md` | ClickHouse | Yellow-accented, technical documentation style |
-| `composio.md` | Composio | Modern dark with colorful integration icons |
 | `hashicorp.md` | HashiCorp | Enterprise-clean, black and white |
 | `mongodb.md` | MongoDB | Green leaf branding, developer documentation focus |
 | `sanity.md` | Sanity | Red accent, content-first editorial layout |
