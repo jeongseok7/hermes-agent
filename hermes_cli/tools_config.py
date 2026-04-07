@@ -150,6 +150,7 @@ PLATFORMS = {
     "wecom": {"label": "💬 WeCom", "default_toolset": "hermes-wecom"},
     "api_server": {"label": "🌐 API Server", "default_toolset": "hermes-api-server"},
     "mattermost": {"label": "💬 Mattermost", "default_toolset": "hermes-mattermost"},
+    "webhook": {"label": "🔗 Webhook", "default_toolset": "hermes-webhook"},
 }
 
 
@@ -312,6 +313,15 @@ TOOL_CATEGORIES = {
                     {"key": "BROWSER_USE_API_KEY", "prompt": "Browser Use API key", "url": "https://browser-use.com"},
                 ],
                 "browser_provider": "browser-use",
+                "post_setup": "browserbase",
+            },
+            {
+                "name": "Firecrawl",
+                "tag": "Cloud browser with remote execution",
+                "env_vars": [
+                    {"key": "FIRECRAWL_API_KEY", "prompt": "Firecrawl API key", "url": "https://firecrawl.dev"},
+                ],
+                "browser_provider": "firecrawl",
                 "post_setup": "browserbase",
             },
             {
@@ -560,7 +570,7 @@ def _get_platform_tools(
     # MCP servers are expected to be available on all platforms by default.
     # If the platform explicitly lists one or more MCP server names, treat that
     # as an allowlist. Otherwise include every globally enabled MCP server.
-    mcp_servers = config.get("mcp_servers", {})
+    mcp_servers = config.get("mcp_servers") or {}
     enabled_mcp_servers = {
         name
         for name, server_cfg in mcp_servers.items()
@@ -1335,6 +1345,7 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
     print(color("⚕ Hermes Tool Configuration", Colors.CYAN, Colors.BOLD))
     print(color("  Enable or disable tools per platform.", Colors.DIM))
     print(color("  Tools that need API keys will be configured when enabled.", Colors.DIM))
+    print(color("  Guide: https://hermes-agent.nousresearch.com/docs/user-guide/features/tools", Colors.DIM))
     print()
 
     # ── First-time install: linear flow, no platform menu ──

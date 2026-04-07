@@ -73,6 +73,7 @@ class TestBuildApiKwargsOpenRouter:
 
     def test_includes_reasoning_in_extra_body(self, monkeypatch):
         agent = _make_agent(monkeypatch, "openrouter")
+        agent.model = "anthropic/claude-sonnet-4-20250514"
         messages = [{"role": "user", "content": "hi"}]
         kwargs = agent._build_api_kwargs(messages)
         extra = kwargs.get("extra_body", {})
@@ -135,6 +136,23 @@ class TestBuildApiKwargsOpenRouter:
         assert messages[1]["tool_calls"][0]["call_id"] == "call_123"
         assert messages[1]["tool_calls"][0]["response_item_id"] == "fc_123"
         assert "codex_reasoning_items" in messages[1]
+
+    def test_should_sanitize_tool_calls_codex_vs_chat(self, monkeypatch):
+        """Codex API should NOT sanitize, all other APIs should sanitize."""
+        # Codex mode should NOT need sanitization
+        codex_agent = _make_agent(monkeypatch, "openrouter")
+        codex_agent.api_mode = "codex_responses"
+        assert codex_agent._should_sanitize_tool_calls() is False
+
+        # Chat completions mode should need sanitization
+        chat_agent = _make_agent(monkeypatch, "openrouter")
+        chat_agent.api_mode = "chat_completions"
+        assert chat_agent._should_sanitize_tool_calls() is True
+
+        # Anthropic mode should need sanitization
+        anthropic_agent = _make_agent(monkeypatch, "openrouter")
+        anthropic_agent.api_mode = "anthropic_messages"
+        assert anthropic_agent._should_sanitize_tool_calls() is True
 
 
 class TestDeveloperRoleSwap:
@@ -798,6 +816,7 @@ class TestReasoningEffortDefaults:
 
     def test_openrouter_default_medium(self, monkeypatch):
         agent = _make_agent(monkeypatch, "openrouter")
+        agent.model = "anthropic/claude-sonnet-4-20250514"
         kwargs = agent._build_api_kwargs([{"role": "user", "content": "hi"}])
         reasoning = kwargs["extra_body"]["reasoning"]
         assert reasoning["effort"] == "medium"
@@ -825,6 +844,7 @@ class TestReasoningEffortDefaults:
 
     def test_openrouter_reasoning_config_override(self, monkeypatch):
         agent = _make_agent(monkeypatch, "openrouter")
+        agent.model = "anthropic/claude-sonnet-4-20250514"
         agent.reasoning_config = {"enabled": True, "effort": "medium"}
         kwargs = agent._build_api_kwargs([{"role": "user", "content": "hi"}])
         assert kwargs["extra_body"]["reasoning"]["effort"] == "medium"
